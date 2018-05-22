@@ -1,0 +1,465 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+hangman.com -- emu8086 assembler version: 4.08  
+ 
+[ 05-Jun-17  --  8:25:54 AM ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       include "emu8086.inc"
+[   2]        :                                       include "hangman_game_ASCII.res"
+[   3]        :                                       
+[   4]        :                                       org 100h                     ;Directive that creates a tiny COM file
+[   5]        :                                       
+[   6]        :                                       
+[   7]        :                                       .model small                 ;Request for memory allocations
+[   8]        :                                       .stack 100h                  ;Stack initialization
+[   9]    1743: E9 78 02                              .DATA                        ;Initialize the data segment
+[  10]        :                                       
+[  11]    1746: E9 75 02                              jmp start1                   ;Unconditional jump to start1 i.e. define the starting point for
+[  12]        :                                       ;execution
+[  13]        :                                       
+[  14]    1749: 63 6F 75 6E 74 72 69 65 73 5F 68 61   filename DB "countries_hangman.txt",0
+                6E 67 6D 61 6E 2E 74 78 74 00       
+[  15]    175F: 00 00                                 file_handle DW ?
+[  16]    1761: FF 00 00 00 00 00 00 00 00 00 00 00   file_data DB 255,?,255 dup(?);Place holder for the data from the file
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00                      
+[  17]    1862: FF 00 00 00 00 00 00 00 00 00 00 00   file_data2 DB 255,?,255 dup(?)
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00 00 00 00 00 00 00 00 
+                00 00 00 00 00                      
+[  18]    1963: 00 00                                 file_offset DW ?
+[  19]        :                                       
+[  20]    1965: 00 00                                 number DW ?
+[  21]    1967: 00 00                                 count DW ?
+[  22]        :                                       
+[  23]    1969: 07 00 20 20 20 20 20 20 20            word DB 7,?,7 dup (' ')
+[  24]        :                                       
+[  25]        :                                       Esc equ 0x1B
+[  26]        :                                       Back equ 0x08
+[  27]        :                                       Enter equ 0x0D
+[  28]        :                                       Space equ 0x20
+[  29]        :                                       
+[  30]    1972: 43 6F 6E 67 72 61 74 75 6C 61 74 69   message1 DB "Congratulations!!! You guessed my word. Play again? (y/n)$"
+                6F 6E 73 21 21 21 20 59 6F 75 20 67 
+                75 65 73 73 65 64 20 6D 79 20 77 6F 
+                72 64 2E 20 50 6C 61 79 20 61 67 61 
+                69 6E 3F 20 28 79 2F 6E 29 24       
+[  31]    19AC: 50 6C 61 79 20 61 67 61 69 6E 3F 20   message2 DB "Play again? (y/n)$"
+                28 79 2F 6E 29 24                   
+[  32]        :                                       
+[  33]        :                                       
+[  34]    19BE:                                       .CODE                        ;Initialize the code segment
+[  35]        :                                       
+[  36]    19BE:                                       start1:
+[  37]    19BE: 50 53 52 B4 02 B6 06 B2 0B B7 00 CD   GOTOXY 11,6
+                10 5A 5B 58                         
+[  38]    19CE: BA 00 01                              lea DX,intro
+[  39]    19D1: B4 09                                 mov AH,9
+[  40]    19D3: CD 21                                 int 21h
+[  41]    19D5: E8 B9 02                              call delay                   ;Implements a 2 second delay
+[  42]        :                                       
+[  43]        :                                       
+[  44]    19D8:                                       start2:
+[  45]    19D8: E8 27 03                              call clear_screen
+[  46]    19DB: E8 BE 02                              call get_country
+[  47]    19DE: B8 00 00                              mov AX,0                     ;Initialize general registers
+[  48]    19E1: 8B D8                                 mov BX,AX
+[  49]    19E3: 8B C8                                 mov CX,AX
+[  50]    19E5: 8B D0                                 mov DX,AX
+[  51]    19E7: 89 0E 67 19                           mov count,CX
+[  52]    19EB: 89 16 65 19                           mov number,DX
+[  53]        :                                       
+[  54]    19EF: 50 51 B4 01 B5 28 B1 09 CD 10 59 58   cursoroff                    ;Macro that turns off the text cursor
+                                                    
+[  55]        :                                       
+[  56]    19FB: 50 56 EB 1A 47 75 65 73 73 20 74 68   print 'Guess the word:   _______';Macro for printing a string
+                65 20 77 6F 72 64 3A 20 20 20 5F 5F 
+                5F 5F 5F 5F 5F 00 BE FF 19 2E 8A 04 
+                3C 00 74 07 46 B4 0E CD 10 EB F2 5E 
+                58                                  
+[  57]    1A2C: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[  58]    1A3C: BA 53 06                              lea DX,HANGMAN_LIVES_07
+[  59]    1A3F: B4 09                                 mov AH,9
+[  60]    1A41: CD 21                                 int 21h
+[  61]        :                                       
+[  62]    1A43:                                       main:                        ;Module for fetching character input
+[  63]    1A43: B4 00                                 mov AH,0                     ;Read character from standard input, i.e. keyboard without echo,
+[  64]    1A45: CD 16                                 int 16h                      ;character stored in AL
+[  65]        :                                       
+[  66]    1A47: 3C 08                                 cmp AL,Back
+[  67]    1A49: 74 F8                                 je main
+[  68]        :                                       
+[  69]    1A4B: 3C 0D                                 cmp AL,Enter
+[  70]    1A4D: 74 F4                                 je main
+[  71]        :                                       
+[  72]    1A4F: 3C 1B                                 cmp AL,Esc
+[  73]    1A51: 74 F0                                 je main
+[  74]        :                                       
+[  75]    1A53: 3C 20                                 cmp AL,Space
+[  76]    1A55: 74 EC                                 je main
+[  77]        :                                       
+[  78]    1A57: 0C 20                                 or AL,20h                    ;Converts any entered character to lowercase
+[  79]    1A59: BB 00 00                              mov BX,0
+[  80]        :                                       
+[  81]        :                                       
+[  82]    1A5C:                                       halalisha:                   ;Module for testing character from input with the letters of random word to be guessed
+[  83]    1A5C: 8B 97 69 19                           mov DX,word[BX]              ;Accesses a particular letter in the random word
+[  84]    1A60: 43                                    inc BX
+[  85]    1A61: 83 FB 07                              cmp BX,7
+[  86]    1A64: 77 DD                                 ja main
+[  87]    1A66: 3A D0                                 cmp DL,AL                    ;Compares a letter from random word with a letter from input
+[  88]    1A68: 74 12                                 je ndio
+[  89]    1A6A: EB 43                                 jmp hapana                   ;jump to hapana if not equal
+[  90]        :                                       
+[  91]        :                                       
+[  92]    1A6C:                                       halalisha2:                   ;Module for testing character from input with the letters of random word to be guessed
+[  93]    1A6C: 8B 97 69 19                           mov DX,word[BX]              ;Accesses a particular letter in the random word
+[  94]    1A70: 43                                    inc BX
+[  95]    1A71: 3A D0                                 cmp DL,AL                    ;Compares a letter from random word with a letter from input
+[  96]    1A73: 74 07                                 je ndio
+[  97]    1A75: 83 FB 07                              cmp BX,7
+[  98]    1A78: 72 F2                                 jb halalisha2
+[  99]    1A7A: EB C7                                 jmp main
+[ 100]        :                                       
+[ 101]        :                                       
+[ 102]    1A7C:                                       ndio:
+[ 103]    1A7C: 53                                    push BX                      ;Backs up register value in the stack
+[ 104]    1A7D: 83 C3 11                              add BX,17d
+[ 105]    1A80: 50 53 52 B4 02 B6 00 8A D3 B7 00 CD   GOTOXY BL,0                  ;Sets the cursor position in terms of rows and columns
+                10 5A 5B 58                         
+[ 106]    1A90: 5B                                    pop BX                       ;Restores value of BX that was stored in the stack
+[ 107]    1A91: 8A D0                                 mov DL,AL
+[ 108]    1A93: B4 02                                 mov AH,2                     ;Writes charater to standard output, i.e. screen
+[ 109]    1A95: CD 21                                 int 21h
+[ 110]        :                                       
+[ 111]    1A97: 8B 0E 67 19                           mov CX,count
+[ 112]    1A9B: 41                                    inc CX                       ;CX will hold the no. of characters guessed correctly and were
+[ 113]        :                                       ;printed on the screen
+[ 114]    1A9C: 89 0E 67 19                           mov count, CX
+[ 115]    1AA0: 83 F9 07                              cmp CX,7
+[ 116]    1AA3: 72 03 E9 54 01                        jae mshindi                   ;Jumps to module that displays 'GOOD GAME' graphics
+[ 117]    1AA8: 83 FB 07                              cmp BX,7                     ;BX holds a count of the no. of times a char has been tested against
+[ 118]        :                                       ;the word,which should not exceed 7 since the word has 7 letters
+[ 119]    1AAB: 76 BF                                 jbe halalisha2
+[ 120]    1AAD: 77 94                                 ja main
+[ 121]        :                                       
+[ 122]        :                                       
+[ 123]    1AAF:                                       hapana:
+[ 124]    1AAF: 83 FB 07                              cmp BX,7
+[ 125]    1AB2: 72 A8                                 jb halalisha
+[ 126]    1AB4: 73 00                                 jae counter
+[ 127]        :                                       
+[ 128]        :                                       
+[ 129]    1AB6:                                       counter:                     ;Module that will hold no. of times one has guess a letter wrongly
+[ 130]    1AB6: 8B 16 65 19                           mov DX,number
+[ 131]    1ABA: 42                                    inc DX                       ;DX will hold the no. of wrong guesses made, this helps draw the hangman
+[ 132]    1ABB: 89 16 65 19                           mov number,DX
+[ 133]        :                                       
+[ 134]    1ABF: 83 FA 07                              cmp DX,7
+[ 135]    1AC2: 75 48                                 jne chora                    ;Jumps to module that draws the hangman
+[ 136]    1AC4: 74 78                                 je mshindwa                  ;At this point the player loses the game since he has exhausted his
+[ 137]        :                                       ;number of attempts
+[ 138]    1AC6: 83 FB 07                              cmp BX,7
+[ 139]    1AC9: 72 03 E9 75 FF                        jae main                     ;If a letter has already been tested against the whole word, it will
+[ 140]        :                                       ;execute the main module and the player guesses another letter
+[ 141]    1ACE: 72 8C                                 jb halalisha
+[ 142]        :                                       
+[ 143]        :                                       ;Modules for drawing the hangman in different states
+[ 144]    1AD0:                                       lives6:
+[ 145]    1AD0: BA 62 07                              mov DX,offset HANGMAN_LIVES_06
+[ 146]    1AD3: B4 09                                 mov AH,9
+[ 147]    1AD5: CD 21                                 int 21h
+[ 148]    1AD7: E9 69 FF                              jmp main
+[ 149]        :                                       
+[ 150]    1ADA:                                       lives5:
+[ 151]    1ADA: BA 71 08                              mov DX,offset HANGMAN_LIVES_05
+[ 152]    1ADD: B4 09                                 mov AH,9
+[ 153]    1ADF: CD 21                                 int 21h
+[ 154]    1AE1: E9 5F FF                              jmp main
+[ 155]        :                                       
+[ 156]    1AE4:                                       lives4:
+[ 157]    1AE4: BA 80 09                              mov DX,offset HANGMAN_LIVES_04
+[ 158]    1AE7: B4 09                                 mov AH,9
+[ 159]    1AE9: CD 21                                 int 21h
+[ 160]    1AEB: E9 55 FF                              jmp main
+[ 161]        :                                       
+[ 162]    1AEE:                                       lives3:
+[ 163]    1AEE: BA 8F 0A                              mov DX,offset HANGMAN_LIVES_03
+[ 164]    1AF1: B4 09                                 mov AH,9
+[ 165]    1AF3: CD 21                                 int 21h
+[ 166]    1AF5: E9 4B FF                              jmp main
+[ 167]        :                                       
+[ 168]    1AF8:                                       lives2:
+[ 169]    1AF8: BA 9E 0B                              mov DX,offset HANGMAN_LIVES_02
+[ 170]    1AFB: B4 09                                 mov AH,9
+[ 171]    1AFD: CD 21                                 int 21h
+[ 172]    1AFF: E9 41 FF                              jmp main
+[ 173]        :                                       
+[ 174]    1B02:                                       lives1:
+[ 175]    1B02: BA AD 0C                              mov DX,offset HANGMAN_LIVES_01
+[ 176]    1B05: B4 09                                 mov AH,9
+[ 177]    1B07: CD 21                                 int 21h
+[ 178]    1B09: E9 37 FF                              jmp main
+[ 179]        :                                       
+[ 180]    1B0C:                                       chora:
+[ 181]    1B0C: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 182]        :                                       
+[ 183]    1B1C: 8B 16 65 19                           mov DX,number
+[ 184]        :                                       
+[ 185]    1B20: 83 FA 01                              cmp DX,1
+[ 186]    1B23: 74 AB                                 je lives6
+[ 187]    1B25: 83 FA 02                              cmp DX,2
+[ 188]    1B28: 74 B0                                 je lives5
+[ 189]    1B2A: 83 FA 03                              cmp DX,3
+[ 190]    1B2D: 74 B5                                 je lives4
+[ 191]    1B2F: 83 FA 04                              cmp DX,4
+[ 192]    1B32: 74 BA                                 je lives3
+[ 193]    1B34: 83 FA 05                              cmp DX,5
+[ 194]    1B37: 74 BF                                 je lives2
+[ 195]    1B39: 83 FA 06                              cmp DX,6
+[ 196]    1B3C: 74 C4                                 je lives1
+[ 197]        :                                       
+[ 198]        :                                       
+[ 199]    1B3E:                                       mshindwa:
+[ 200]    1B3E: E8 C1 01                              call clear_screen
+[ 201]    1B41: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 202]    1B51: BA BC 0D                              lea DX,HANGMAN_GAMEOVER_00
+[ 203]    1B54: B4 09                                 mov AH,9
+[ 204]    1B56: CD 21                                 int 21h
+[ 205]    1B58: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 206]    1B68: BA CB 0E                              lea DX,HANGMAN_GAMEOVER_01
+[ 207]    1B6B: B4 09                                 mov AH,9
+[ 208]    1B6D: CD 21                                 int 21h
+[ 209]    1B6F: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 210]    1B7F: BA DA 0F                              lea DX,HANGMAN_GAMEOVER_02
+[ 211]    1B82: B4 09                                 mov AH,9
+[ 212]    1B84: CD 21                                 int 21h
+[ 213]    1B86: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 214]    1B96: BA E9 10                              lea DX,HANGMAN_GAMEOVER_03
+[ 215]    1B99: B4 09                                 mov AH,9
+[ 216]    1B9B: CD 21                                 int 21h
+[ 217]    1B9D: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 218]    1BAD: BA DA 0F                              lea DX,HANGMAN_GAMEOVER_02
+[ 219]    1BB0: B4 09                                 mov AH,9
+[ 220]    1BB2: CD 21                                 int 21h
+[ 221]    1BB4: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 222]    1BC4: BA CB 0E                              lea DX,HANGMAN_GAMEOVER_01
+[ 223]    1BC7: B4 09                                 mov AH,9
+[ 224]    1BC9: CD 21                                 int 21h
+[ 225]    1BCB: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 226]    1BDB: BA DA 0F                              lea DX,HANGMAN_GAMEOVER_02
+[ 227]    1BDE: B4 09                                 mov AH,9
+[ 228]    1BE0: CD 21                                 int 21h
+[ 229]        :                                       
+[ 230]    1BE2: E8 1D 01                              call clear_screen
+[ 231]    1BE5: BA AC 19                              lea DX, message2
+[ 232]    1BE8: B4 09                                 mov AH,9
+[ 233]    1BEA: CD 21                                 int 21h
+[ 234]        :                                       
+[ 235]    1BEC: B4 00                                 mov AH,0
+[ 236]    1BEE: CD 16                                 int 16h
+[ 237]        :                                       
+[ 238]    1BF0: 0C 20                                 or AL,20h
+[ 239]    1BF2: 3C 79                                 cmp AL,'y'
+[ 240]    1BF4: 75 03 E9 DF FD                        je start2
+[ 241]    1BF9: E9 8F 00                              jmp mwisho
+[ 242]        :                                       
+[ 243]        :                                       
+[ 244]    1BFC:                                       mshindi:
+[ 245]    1BFC: E8 03 01                              call clear_screen
+[ 246]    1BFF: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 247]    1C0F: BA F8 11                              lea DX,HANGMAN_GOODGAME_00
+[ 248]    1C12: B4 09                                 mov AH,9
+[ 249]    1C14: CD 21                                 int 21h
+[ 250]    1C16: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 251]    1C26: BA 07 13                              lea DX,HANGMAN_GOODGAME_01
+[ 252]    1C29: B4 09                                 mov AH,9
+[ 253]    1C2B: CD 21                                 int 21h
+[ 254]    1C2D: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 255]    1C3D: BA 16 14                              lea DX,HANGMAN_GOODGAME_02
+[ 256]    1C40: B4 09                                 mov AH,9
+[ 257]    1C42: CD 21                                 int 21h
+[ 258]    1C44: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 259]    1C54: BA 25 15                              lea DX,HANGMAN_GOODGAME_03
+[ 260]    1C57: B4 09                                 mov AH,9
+[ 261]    1C59: CD 21                                 int 21h
+[ 262]    1C5B: 50 53 52 B4 02 B6 04 B2 10 B7 00 CD   GOTOXY 16,4
+                10 5A 5B 58                         
+[ 263]    1C6B: BA 16 14                              lea DX,HANGMAN_GOODGAME_02
+[ 264]    1C6E: B4 09                                 mov AH,9
+[ 265]    1C70: CD 21                                 int 21h
+[ 266]        :                                       
+[ 267]    1C72: E8 8D 00                              call clear_screen
+[ 268]    1C75: BA 72 19                              lea DX, message1
+[ 269]    1C78: B4 09                                 mov AH,9
+[ 270]    1C7A: CD 21                                 int 21h
+[ 271]        :                                       
+[ 272]    1C7C: B4 00                                 mov AH,0
+[ 273]    1C7E: CD 16                                 int 16h
+[ 274]        :                                       
+[ 275]    1C80: 0C 20                                 or AL,20h
+[ 276]    1C82: 3C 79                                 cmp AL,'y'
+[ 277]    1C84: 75 03 E9 4F FD                        je start2
+[ 278]    1C89: EB 00                                 jmp mwisho
+[ 279]        :                                       
+[ 280]        :                                       
+[ 281]    1C8B:                                       mwisho:
+[ 282]    1C8B: B8 00 00                              mov AX,0
+[ 283]    1C8E: CD 16                                 int 16h
+[ 284]    1C90: C3                                    ret
+[ 285]        :                                       
+[ 286]    1C91:                                       delay PROC                   ;Procedure for executing a time delay of 2 seconds
+[ 287]    1C91: B9 0F 00                              mov CX,000FH       ;Store 2000000ms in CX:DX i.e. in preparation for a 2 second delay
+[ 288]    1C94: BA 40 42                              mov DX,4240H       ;2000000 in binary is 1111 0100 0010 0100 0000 i.e. 000F4240H
+[ 289]    1C97: B4 86                                 mov AH,86H         ;For Calling function 86 of interrupt 15h
+[ 290]    1C99: CD 15                                 int 15H            ;Executes a BIOS Wait for the specified 2 seconds
+[ 291]    1C9B: C3                                    ret
+[ 292]        :                                       delay ENDP
+[ 293]        :                                       
+[ 294]        :                                       
+[ 295]        :                                       
+[ 296]    1C9C:                                       get_country PROC
+[ 297]    1C9C: E8 33 00                              call load_file             ;Returns file offset in DX
+[ 298]    1C9F: 89 16 63 19                           mov file_offset, DX
+[ 299]        :                                       
+[ 300]    1CA3: E8 4C 00                              call random                ;Returns a random number between 0 and 50 in AH
+[ 301]    1CA6: BB 00 00                              mov BX, 0
+[ 302]    1CA9: 8A DC                                 mov BL, AH
+[ 303]    1CAB: B8 00 00                              mov AX, 0
+[ 304]    1CAE: B0 08                                 mov AL, 8                  ;8 lettered countries in the txt file
+[ 305]    1CB0: F6 E3                                 mul BL                     ;Result is in AX
+[ 306]        :                                       
+[ 307]    1CB2: 8B 16 63 19                           mov DX, file_offset
+[ 308]    1CB6: 03 D0                                 add DX, AX                 ;Shift offset to selected random character
+[ 309]        :                                       
+[ 310]    1CB8: E8 01 00                              call buffer
+[ 311]    1CBB: C3                                    ret               ;Loads random word into our variable
+[ 312]        :                                       get_country ENDP
+[ 313]        :                                       
+[ 314]        :                                       
+[ 315]    1CBC:                                       buffer PROC
+[ 316]    1CBC: B9 07 00                              mov CX,7
+[ 317]    1CBF: 8B DA                                 mov BX, DX
+[ 318]    1CC1: BF 00 00                              mov DI, 0
+[ 319]    1CC4: B8 00 00                              mov AX, 0
+[ 320]    1CC7:                                       write:
+[ 321]    1CC7: 8A 07                                 mov AL, [BX]
+[ 322]    1CC9: 89 85 69 19                           mov word[DI],AX
+[ 323]    1CCD: 43                                    inc BX
+[ 324]    1CCE: 47                                    inc DI
+[ 325]    1CCF: E2 F6                                 loop write
+[ 326]    1CD1: C3                                    ret
+[ 327]        :                                       buffer ENDP
+[ 328]        :                                       
+[ 329]        :                                       
+[ 330]    1CD2:                                       load_file PROC               ;Module that will open file using DOS interpts
+[ 331]    1CD2: B0 02                                 mov AL, 2                 ;AL stores the command 2=read/write
+[ 332]    1CD4: BA 49 17                              mov DX, offset filename
+[ 333]    1CD7: B4 3D                                 mov AH, 3dh               ;Dos interrupt routine for opening a file
+[ 334]    1CD9: CD 21                                 int 21h
+[ 335]        :                                       ;jc error
+[ 336]    1CDB: A3 5F 17                              mov file_handle, AX       ;ISR returns file handle in AX
+[ 337]        :                                       
+[ 338]        :                                       ;Read data from file
+[ 339]    1CDE: B9 C2 01                              mov CX, 450d              ;CX stores the number of bytes you want to read
+[ 340]    1CE1: 8B 1E 5F 17                           mov BX, file_handle       ;File handle is stored in BX for the ISR
+[ 341]    1CE5: B4 3F                                 mov AH, 3Fh               ;interrupt routine for reading a file
+[ 342]    1CE7: CD 21                                 int 21h
+[ 343]        :                                       ;jc error
+[ 344]        :                                       ;Data is stored in DS:DX
+[ 345]        :                                       ;Errors are indicated in the CF
+[ 346]        :                                       
+[ 347]    1CE9: 8B 1E 5F 17                           mov BX, file_handle
+[ 348]    1CED: B4 3E                                 mov AH, 3Eh               ;Close file
+[ 349]    1CEF: CD 21                                 int 21h
+[ 350]        :                                       
+[ 351]        :                                       
+[ 352]        :                                       ;error:
+[ 353]    1CF1: C3                                    ret
+[ 354]        :                                       
+[ 355]        :                                       load_file ENDP
+[ 356]        :                                       
+[ 357]        :                                       
+[ 358]    1CF2:                                       random PROC
+[ 359]    1CF2: B4 2C                                 mov AH, 2Ch
+[ 360]    1CF4: CD 21                                 int 21h                  ;DL now holds 1/100 second
+[ 361]        :                                       ;There are 51 words
+[ 362]        :                                       ;get remainder when you divide DL by 51
+[ 363]    1CF6: B8 00 00                              mov AX, 0
+[ 364]    1CF9: 8A C2                                 mov AL, DL
+[ 365]    1CFB: B3 33                                 mov BL, 51d
+[ 366]    1CFD: F6 F3                                 div BL                   ;remainder is in AH
+[ 367]    1CFF: C3                                    ret
+[ 368]        :                                       random ENDP
+[ 369]        :                                       
+[ 370]    1D00: EB 32 50 1E 53 51 57 B8 40 00 8E D8   DEFINE_CLEAR_SCREEN
+                B4 06 B0 00 B7 07 B5 00 B1 00 BF 84 
+                00 8A 35 BF 4A 00 8A 15 FE CA CD 10 
+                B7 00 B2 00 B6 00 B4 02 CD 10 5F 59 
+                5B 1F 58 C3                         
+[ 371]        :                                       
+[ 372]        :                                       
+[ 373]        :                                       END
+[ 374]        :                                       
+ 
+===================================================================================================
+ 
+
+
+
+
+===================================================================================================

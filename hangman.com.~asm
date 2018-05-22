@@ -1,0 +1,377 @@
+include "emu8086.inc"
+include "hangman_game_ASCII.res"
+
+org 100h                     ;Directive that creates a tiny COM file
+
+
+.model small                 ;Request for memory allocations
+.stack 100h                  ;Stack initialization
+.DATA                        ;Initialize the data segment
+
+jmp start1                   ;Unconditional jump to start1 i.e. define the starting point for
+;execution
+
+filename DB "countries_hangman.txt",0
+file_handle DW ?
+file_data DB 255,?,255 dup(?);Place holder for the data from the file
+file_data2 DB 255,?,255 dup(?)
+file_offset DW ?
+
+number DW ?
+count DW ?
+
+word DB 7,?,7 dup (' ')
+
+Esc equ 0x1B
+Back equ 0x08
+Enter equ 0x0D
+Space equ 0x20
+
+message1 DB "Congratulations!!! You guessed my word. Play again? (y/n)$"
+message2 DB "Play again? (y/n)$"
+
+
+.CODE                        ;Initialize the code segment
+
+start1:
+GOTOXY 11,6
+lea DX,intro
+mov AH,9
+int 21h
+call delay                   ;Implements a 2 second delay
+
+
+start2:
+call clear_screen
+call get_country
+mov AX,0                     ;Initialize general registers
+mov BX,AX
+mov CX,AX
+mov DX,AX
+mov count,CX
+mov number,DX
+
+cursoroff                    ;Macro that turns off the text cursor
+
+print 'Guess the word:   _______';Macro for printing a string
+GOTOXY 16,4
+lea DX,HANGMAN_LIVES_07
+mov AH,9
+int 21h
+
+main:                        ;Module for fetching character input
+mov AH,0                     ;Read character from standard input, i.e. keyboard without echo,
+int 16h                      ;character stored in AL
+
+cmp AL,Back
+je main
+
+cmp AL,Enter
+je main
+
+cmp AL,Esc
+je main
+
+cmp AL,Space
+je main
+
+or AL,20h                    ;Converts any entered character to lowercase
+mov BX,0
+
+
+halalisha:                   ;Module for testing character from input with the letters of random word to be guessed
+mov DX,word[BX]              ;Accesses a particular letter in the random word
+inc BX
+cmp BX,7
+ja main
+cmp DL,AL                    ;Compares a letter from random word with a letter from input
+je ndio
+jmp hapana                   ;jump to hapana if not equal
+
+
+halalisha2:                   ;Module for testing character from input with the letters of random word to be guessed
+mov DX,word[BX]              ;Accesses a particular letter in the random word
+inc BX
+cmp DL,AL                    ;Compares a letter from random word with a letter from input
+je ndio
+cmp BX,7
+jb halalisha2
+jmp main
+
+
+ndio:
+push BX                      ;Backs up register value in the stack
+add BX,17d
+GOTOXY BL,0                  ;Sets the cursor position in terms of rows and columns
+pop BX                       ;Restores value of BX that was stored in the stack
+mov DL,AL
+mov AH,2                     ;Writes charater to standard output, i.e. screen
+int 21h
+
+mov CX,count
+inc CX                       ;CX will hold the no. of characters guessed correctly and were
+;printed on the screen
+mov count, CX
+cmp CX,7
+jae mshindi                   ;Jumps to module that displays 'GOOD GAME' graphics
+cmp BX,7                     ;BX holds a count of the no. of times a char has been tested against
+;the word,which should not exceed 7 since the word has 7 letters
+jbe halalisha2
+ja main
+
+
+hapana:
+cmp BX,7
+jb halalisha
+jae counter
+
+
+counter:                     ;Module that will hold no. of times one has guess a letter wrongly
+mov DX,number
+inc DX                       ;DX will hold the no. of wrong guesses made, this helps draw the hangman
+mov number,DX
+
+cmp DX,7
+jne chora                    ;Jumps to module that draws the hangman
+je mshindwa                  ;At this point the player loses the game since he has exhausted his
+;number of attempts
+cmp BX,7
+jae main                     ;If a letter has already been tested against the whole word, it will
+;execute the main module and the player guesses another letter
+jb halalisha
+
+;Modules for drawing the hangman in different states
+lives6:
+mov DX,offset HANGMAN_LIVES_06
+mov AH,9
+int 21h
+jmp main
+
+lives5:
+mov DX,offset HANGMAN_LIVES_05
+mov AH,9
+int 21h
+jmp main
+
+lives4:
+mov DX,offset HANGMAN_LIVES_04
+mov AH,9
+int 21h
+jmp main
+
+lives3:
+mov DX,offset HANGMAN_LIVES_03
+mov AH,9
+int 21h
+jmp main
+
+lives2:
+mov DX,offset HANGMAN_LIVES_02
+mov AH,9
+int 21h
+jmp main
+
+lives1:
+mov DX,offset HANGMAN_LIVES_01
+mov AH,9
+int 21h
+jmp main
+
+chora:
+GOTOXY 16,4
+
+mov DX,number
+
+cmp DX,1
+je lives6
+cmp DX,2
+je lives5
+cmp DX,3
+je lives4
+cmp DX,4
+je lives3
+cmp DX,5
+je lives2
+cmp DX,6
+je lives1
+
+
+mshindwa:
+call clear_screen
+GOTOXY 16,4
+lea DX,HANGMAN_GAMEOVER_00
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GAMEOVER_01
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GAMEOVER_02
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GAMEOVER_03
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GAMEOVER_02
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GAMEOVER_01
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GAMEOVER_02
+mov AH,9
+int 21h
+
+call clear_screen
+lea DX, message2
+mov AH,9
+int 21h
+
+mov AH,0
+int 16h
+
+or AL,20h
+cmp AL,'y'
+je start2
+jmp mwisho
+
+
+mshindi:
+call clear_screen
+GOTOXY 16,4
+lea DX,HANGMAN_GOODGAME_00
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GOODGAME_01
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GOODGAME_02
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GOODGAME_03
+mov AH,9
+int 21h
+GOTOXY 16,4
+lea DX,HANGMAN_GOODGAME_02
+mov AH,9
+int 21h
+
+call clear_screen
+lea DX, message1
+mov AH,9
+int 21h
+
+mov AH,0
+int 16h
+
+or AL,20h
+cmp AL,'y'
+je start2
+jmp mwisho
+
+
+mwisho:
+mov AX,0
+int 16h
+ret
+
+delay PROC                   ;Procedure for executing a time delay of 2 seconds
+mov CX,000FH       ;Store 2000000ms in CX:DX i.e. in preparation for a 2 second delay
+mov DX,4240H       ;2000000 in binary is 1111 0100 0010 0100 0000 i.e. 000F4240H
+mov AH,86H         ;For Calling function 86 of interrupt 15h
+int 15H            ;Executes a BIOS Wait for the specified 2 seconds
+ret
+delay ENDP
+
+
+
+get_country PROC
+call load_file             ;Returns file offset in DX
+mov file_offset, DX
+
+call random                ;Returns a random number between 0 and 50 in AH
+mov BX, 0
+mov BL, AH
+mov AX, 0
+mov AL, 8                  ;8 lettered countries in the txt file
+mul BL                     ;Result is in AX
+
+mov DX, file_offset
+add DX, AX                 ;Shift offset to selected random character
+
+call buffer
+ret               ;Loads random word into our variable
+get_country ENDP
+
+
+buffer PROC
+mov CX,7
+mov BX, DX
+mov DI, 0
+mov AX, 0
+write:
+mov AL, [BX]
+mov word[DI],AX
+inc BX
+inc DI
+loop write
+ret
+buffer ENDP
+
+
+load_file PROC               ;Module that will open file using DOS interpts
+mov AL, 2                 ;AL stores the command 2=read/write
+mov DX, offset filename
+mov AH, 3dh               ;Dos interrupt routine for opening a file
+int 21h
+;jc error
+mov file_handle, AX       ;ISR returns file handle in AX
+
+;Read data from file
+mov CX, 450d              ;CX stores the number of bytes you want to read
+mov BX, file_handle       ;File handle is stored in BX for the ISR
+mov AH, 3Fh               ;interrupt routine for reading a file
+int 21h
+;jc error
+;Data is stored in DS:DX
+;Errors are indicated in the CF
+
+mov BX, file_handle
+mov AH, 3Eh               ;Close file
+int 21h
+
+
+;error:
+ret
+
+load_file ENDP
+
+
+random PROC
+mov AH, 2Ch
+int 21h                  ;DL now holds 1/100 second
+;There are 51 words
+;get remainder when you divide DL by 51
+mov AX, 0
+mov AL, DL
+mov BL, 51d
+div BL                   ;remainder is in AH
+ret
+random ENDP
+
+DEFINE_CLEAR_SCREEN
+
+
+END
+
+
+
+; [SOURCE]: C:\emu8086\MySource\hangman.asm
